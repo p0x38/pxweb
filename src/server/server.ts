@@ -14,12 +14,13 @@ await app.register(fastifyStatic, {
   root: join(import.meta.dirname, "../../dist"),
 });
 
-const chat = new Chat();
 const io = new SocketIOServer(app.server, {
   cors: {
     origin: true,
   },
 });
+
+const chat = new Chat(io);
 
 io.on("connection", (socket) => {
   chat.add(socket);
