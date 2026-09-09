@@ -1,5 +1,6 @@
 import Fastify from "fastify";
 import websocket from "@fastify/websocket";
+import type { RawData } from "ws";
 
 import { ClientMessageSchema } from "../../shared/protocol.js";
 import { Chat } from "./chat.js";
@@ -15,7 +16,7 @@ const chat = new Chat();
 app.get("/ws", { websocket: true }, (socket) => {
   chat.add(socket);
 
-  socket.on("message", (raw) => {
+  socket.on("message", (raw: RawData) => {
     let parsed: unknown;
 
     try {
@@ -65,7 +66,7 @@ app.get("/ws", { websocket: true }, (socket) => {
     chat.remove(socket);
   });
 
-  socket.on("error", (error) => {
+  socket.on("error", (error: Error) => {
     app.log.error(error);
     chat.remove(socket);
   });
