@@ -1,6 +1,6 @@
 import Fastify from "fastify";
-import websocket from "@fastify/websocket";
 import fastifyStatic from "@fastify/static";
+import { Server as SocketIOServer } from "socket.io";
 import { join } from "node:path";
 
 import { ClientMessageSchema } from "../../shared/protocol.ts";
@@ -10,34 +10,25 @@ const app = Fastify({
   logger: true,
 });
 
-await app.register(websocket);
-
 await app.register(fastifyStatic, {
   root: join(import.meta.dirname, "../../dist"),
 });
 
 const chat = new Chat();
+const io = new SocketIOServer(app.server, {
+  cors: {
+    origin: true,
+  },
+});
 
-app.get("/ws", { websocket: true }, (socket) => {
+io.on("connection", (socket) => {
   chat.add(socket);
 
-  socket.on("message", (raw: { toString(): string }) => {
-    let parsed: unknown;
-
-    try {
-      parsed = JSON.parse(raw.toString());
-    } catch {
-      chat.send(socket, {
-        type: "error",
-        message: "Invalid JSON",
-      });
-      return;
-    }
-
-    const result = ClientMessageSchema.safeParse(parsed);
+  socket.on("message", (raw: unknown) => {
+    const result = ClientMessageSchema.safeParse(raw);
 
     if (!result.success) {
-      chat.send(socket, {
+      socket.emit("message", {
         type: "error",
         message: "Invalid message",
       });
@@ -56,23 +47,22 @@ app.get("/ws", { websocket: true }, (socket) => {
         break;
 
       case "set_username":
-        chat.send(socket, {
+        socket.emit("message", {
           type: "system",
           message: `Username set to ${result.data.username}`,
         });
         break;
 
       case "typing":
+        socket.broadcast.emit("message", {
+          type: "system",
+          message: result.data.typing ? "Someone is typing" : "Someone stopped typing",
+        });
         break;
     }
   });
 
-  socket.on("close", () => {
-    chat.remove(socket);
-  });
-
-  socket.on("error", (error: Error) => {
-    app.log.error(error);
+  socket.on("disconnect", () => {
     chat.remove(socket);
   });
 });
