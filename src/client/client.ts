@@ -1,25 +1,11 @@
-export interface ChatMessage {
-  type: "chat";
-  message: string;
-}
-
-export interface SystemMessage {
-  type: "system";
-  message: string;
-}
-
-export interface ErrorMessage {
-  type: "error";
-  message: string;
-}
-
-export type ServerMessage =
-  | ChatMessage
-  | SystemMessage
-  | ErrorMessage;
+import type {
+  ClientMessage,
+  ServerMessage,
+} from "../../shared/protocol.js";
 
 export class ChatClient {
-  private socket: WebSocket;
+  private readonly socket: WebSocket;
+  private messageHandler?: (message: ServerMessage) => void;
 
   constructor(url: string) {
     this.socket = new WebSocket(url);
@@ -37,47 +23,40 @@ export class ChatClient {
     });
 
     this.socket.addEventListener("message", (event) => {
-      this.handleMessage(event.data);
+      if (typeof event.data !== "string") {
+        console.error("Received non-text WebSocket message");
+        return;
+      }
+
+      let message: ServerMessage;
+
+      try {
+        message = JSON.parse(event.data) as ServerMessage;
+      } catch {
+        console.error("Received invalid JSON:", event.data);
+        return;
+      }
+
+      this.messageHandler?.(message);
     });
   }
 
-  private handleMessage(raw: string): void {
-    let message: ServerMessage;
-
-    try {
-      message = JSON.parse(raw) as ServerMessage;
-    } catch {
-      console.error("Received invalid JSON:", raw);
-      return;
-    }
-
-    switch (message.type) {
-      case "chat":
-        console.log(`CHAT: ${message.message}`);
-        break;
-
-      case "system":
-        console.log(`SYSTEM: ${message.message}`);
-        break;
-
-      case "error":
-        console.error(`ERROR: ${message.message}`);
-        break;
-    }
+  onMessage(handler: (message: ServerMessage) => void): void {
+    this.messageHandler = handler;
   }
 
-  sendMessage(message: string): void {
+  sendMessage(content: string): void {
     if (this.socket.readyState !== WebSocket.OPEN) {
       console.warn("WebSocket isn't connected");
       return;
     }
 
-    const data: ChatMessage = {
+    const message: ClientMessage = {
       type: "chat",
-      message,
+      content,
     };
 
-    this.socket.send(JSON.stringify(data));
+    this.socket.send(JSON.stringify(message));
   }
 
   close(): void {

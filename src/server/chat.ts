@@ -1,19 +1,15 @@
-import type { WebSocket } from "ws";
+import type { ServerMessage } from "../../shared/protocol.js";
 
-export interface ChatMessage {
-  type: "chat";
-  message: string;
-}
-
-export interface ServerMessage {
-  type: "chat" | "system" | "error";
-  message: string;
+export interface ChatSocket {
+  readonly readyState: number;
+  readonly OPEN: number;
+  send(data: string): void;
 }
 
 export class Chat {
-  private readonly clients = new Set<WebSocket>();
+  private readonly clients = new Set<ChatSocket>();
 
-  add(socket: WebSocket): void {
+  add(socket: ChatSocket): void {
     this.clients.add(socket);
 
     this.broadcast({
@@ -22,7 +18,7 @@ export class Chat {
     });
   }
 
-  remove(socket: WebSocket): void {
+  remove(socket: ChatSocket): void {
     this.clients.delete(socket);
 
     this.broadcast({
@@ -31,19 +27,19 @@ export class Chat {
     });
   }
 
-  broadcast(data: ServerMessage): void {
-    const message = JSON.stringify(data);
+  broadcast(message: ServerMessage): void {
+    const data = JSON.stringify(message);
 
     for (const client of this.clients) {
-      if (client.readyState === 1) {
-        client.send(message);
+      if (client.readyState === client.OPEN) {
+        client.send(data);
       }
     }
   }
 
-  send(socket: WebSocket, data: ServerMessage): void {
-    if (socket.readyState === 1) {
-      socket.send(JSON.stringify(data));
+  send(socket: ChatSocket, message: ServerMessage): void {
+    if (socket.readyState === socket.OPEN) {
+      socket.send(JSON.stringify(message));
     }
   }
 

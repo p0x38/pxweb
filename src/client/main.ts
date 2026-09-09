@@ -1,35 +1,36 @@
 import { ChatClient } from "./client.js";
+import type { ServerMessage } from "../../shared/protocol.js";
 
-const chat = new ChatClient("ws://localhost:3000/ws");
+const chat = new ChatClient("ws://localhost:5230/ws");
 
-const input = document.querySelector<HTMLInputElement>("#message");
-const button = document.querySelector<HTMLButtonElement>("#send");
-const messages = document.querySelector<HTMLDivElement>("#messages");
+const inputElement = document.querySelector<HTMLInputElement>("#message");
+const buttonElement = document.querySelector<HTMLButtonElement>("#send");
+const messagesElement = document.querySelector<HTMLDivElement>("#messages");
 
-if (!input || !button || !messages) {
+if (!inputElement || !buttonElement || !messagesElement) {
   throw new Error("Chat UI elements not found");
 }
 
-chat.onMessage((message) => {
+const input = inputElement;
+const button = buttonElement;
+const messages = messagesElement;
+
+chat.onMessage((message: ServerMessage) => {
   const element = document.createElement("div");
 
   switch (message.type) {
     case "chat":
       element.textContent = `${message.username}: ${message.content}`;
       break;
-
     case "system":
       element.textContent = `[system] ${message.message}`;
       break;
-
     case "user_join":
       element.textContent = `${message.username} joined`;
       break;
-
     case "user_leave":
       element.textContent = `${message.username} left`;
       break;
-
     case "error":
       element.textContent = `[error] ${message.message}`;
       break;

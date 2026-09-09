@@ -1,12 +1,8 @@
 import Fastify from "fastify";
 import websocket from "@fastify/websocket";
-import type { WebSocket } from "ws";
 
+import { ClientMessageSchema } from "../../shared/protocol.js";
 import { Chat } from "./chat.js";
-import type {
-  ClientMessage,
-  ServerMessage,
-} from "../../shared/protocol.js";
 
 const app = Fastify({
   logger: true,
@@ -16,48 +12,52 @@ await app.register(websocket);
 
 const chat = new Chat();
 
-app.get("/ws", { websocket: true }, (socket: WebSocket) => {
+app.get("/ws", { websocket: true }, (socket) => {
   chat.add(socket);
 
   socket.on("message", (raw) => {
-    let data: ClientMessage;
+    let parsed: unknown;
 
     try {
-      data = JSON.parse(raw.toString()) as ClientMessage;
+      parsed = JSON.parse(raw.toString());
     } catch {
       chat.send(socket, {
         type: "error",
         message: "Invalid JSON",
       });
-
       return;
     }
 
-    switch (data.type) {
+    const result = ClientMessageSchema.safeParse(parsed);
+
+    if (!result.success) {
+      chat.send(socket, {
+        type: "error",
+        message: "Invalid message",
+      });
+      return;
+    }
+
+    switch (result.data.type) {
       case "chat":
         chat.broadcast({
           type: "chat",
           id: crypto.randomUUID(),
           username: "Anonymous",
-          content: data.content,
+          content: result.data.content,
           timestamp: Date.now(),
         });
-
         break;
 
       case "set_username":
-        // TODO: implement username handling
+        chat.send(socket, {
+          type: "system",
+          message: `Username set to ${result.data.username}`,
+        });
         break;
 
       case "typing":
-        // TODO: implement typing indicators
         break;
-
-      default:
-        chat.send(socket, {
-          type: "error",
-          message: "Unknown message type",
-        });
     }
   });
 
