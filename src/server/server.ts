@@ -13,7 +13,7 @@ const app = Fastify({
 await app.register(websocket);
 
 await app.register(fastifyStatic, {
-  root: join(import.meta.dirname, "../../public"),
+  root: join(import.meta.dirname, "../../dist"),
 });
 
 const chat = new Chat();
@@ -21,7 +21,7 @@ const chat = new Chat();
 app.get("/ws", { websocket: true }, (socket) => {
   chat.add(socket);
 
-  socket.on("message", (raw: RawData) => {
+  socket.on("message", (raw: { toString(): string }) => {
     let parsed: unknown;
 
     try {

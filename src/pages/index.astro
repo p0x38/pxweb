@@ -1,0 +1,25 @@
+---
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>pxweb chat</title>
+  </head>
+  <body>
+    <main>
+      <h1>pxweb chat</h1>
+      <div id="messages" aria-live="polite"></div>
+      <form id="chat-form">
+        <input id="message" name="message" autocomplete="off" placeholder="Message..." />
+        <button id="send" type="submit">Send</button>
+      </form>
+    </main>
+
+    <script>
+      import "../client/main.ts";
+    </script>
+  </body>
+</html>

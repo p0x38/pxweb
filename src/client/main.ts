@@ -1,18 +1,19 @@
 import { ChatClient } from "./client.ts";
 import type { ServerMessage } from "../../shared/protocol.ts";
 
-const chat = new ChatClient("ws://localhost:5230/ws");
+const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+const chat = new ChatClient(`${protocol}//${window.location.host}/ws`);
 
 const inputElement = document.querySelector<HTMLInputElement>("#message");
-const buttonElement = document.querySelector<HTMLButtonElement>("#send");
+const formElement = document.querySelector<HTMLFormElement>("#chat-form");
 const messagesElement = document.querySelector<HTMLDivElement>("#messages");
 
-if (!inputElement || !buttonElement || !messagesElement) {
+if (!inputElement || !formElement || !messagesElement) {
   throw new Error("Chat UI elements not found");
 }
 
 const input = inputElement;
-const button = buttonElement;
+const form = formElement;
 const messages = messagesElement;
 
 chat.onMessage((message: ServerMessage) => {
@@ -50,10 +51,7 @@ function sendMessage(): void {
   input.value = "";
 }
 
-button.addEventListener("click", sendMessage);
-
-input.addEventListener("keydown", (event) => {
-  if (event.key === "Enter") {
-    sendMessage();
-  }
+form.addEventListener("submit", (event) => {
+  event.preventDefault();
+  sendMessage();
 });

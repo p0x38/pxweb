@@ -2,10 +2,13 @@
   "name": "pxweb",
   "version": "1.0.0",
   "description": "",
-  "main": "src/server.js",
+  "main": "src/server/server.ts",
   "scripts": {
-    "dev": "node --experimental-strip-types --watch src/server/server.ts",
+    "dev": "astro dev",
+    "dev:server": "node --experimental-strip-types --watch src/server/server.ts",
+    "build": "astro build",
     "start": "node --experimental-strip-types src/server/server.ts",
+    "preview": "astro preview",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [],
@@ -27,12 +30,10 @@
     "astro": "^7.2.4",
     "better-auth": "^1.7.1",
     "fastify": "^5.12.1",
-    "ws": "^8.21.3",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^26.4.1",
-    "@types/ws": "^8.18.1",
     "typescript": "^7.0.2"
   }
 }
