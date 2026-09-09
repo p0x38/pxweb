@@ -2,7 +2,11 @@ import type { Server as SocketIOServer, Socket } from "socket.io";
 import type { ServerMessage } from "../../shared/protocol.ts";
 
 export class Chat {
-  constructor(private readonly io: SocketIOServer) {}
+  private readonly io: SocketIOServer;
+
+  constructor(io: SocketIOServer) {
+    this.io = io;
+  }
 
   add(socket: Socket): void {
     this.broadcast({
