@@ -1,43 +1,30 @@
+import { io, type Socket } from "socket.io-client";
 import type {
   ClientMessage,
   ServerMessage,
 } from "../../shared/protocol.ts";
 
 export class ChatClient {
-  private readonly socket: WebSocket;
+  private readonly socket: Socket;
   private messageHandler?: (message: ServerMessage) => void;
 
-  constructor(url: string) {
-    this.socket = new WebSocket(url);
+  constructor(url?: string) {
+    this.socket = io(url ?? window.location.origin);
 
-    this.socket.addEventListener("open", () => {
+    this.socket.on("connect", () => {
       console.log("Connected to chat server");
     });
 
-    this.socket.addEventListener("close", () => {
+    this.socket.on("disconnect", () => {
       console.log("Disconnected from chat server");
     });
 
-    this.socket.addEventListener("error", (error) => {
-      console.error("WebSocket error:", error);
+    this.socket.on("connect_error", (error) => {
+      console.error("Socket.IO connection error:", error);
     });
 
-    this.socket.addEventListener("message", (event) => {
-      if (typeof event.data !== "string") {
-        console.error("Received non-text WebSocket message");
-        return;
-      }
-
-      let message: ServerMessage;
-
-      try {
-        message = JSON.parse(event.data) as ServerMessage;
-      } catch {
-        console.error("Received invalid JSON:", event.data);
-        return;
-      }
-
-      this.messageHandler?.(message);
+    this.socket.on("message", (message: unknown) => {
+      this.messageHandler?.(message as ServerMessage);
     });
   }
 
@@ -46,20 +33,15 @@ export class ChatClient {
   }
 
   sendMessage(content: string): void {
-    if (this.socket.readyState !== WebSocket.OPEN) {
-      console.warn("WebSocket isn't connected");
-      return;
-    }
-
     const message: ClientMessage = {
       type: "chat",
       content,
     };
 
-    this.socket.send(JSON.stringify(message));
+    this.socket.emit("message", message);
   }
 
   close(): void {
-    this.socket.close();
+    this.socket.disconnect();
   }
 }
