@@ -1,7 +1,7 @@
 import type {
   ClientMessage,
   ServerMessage,
-} from "../../shared/protocol.js";
+} from "../../shared/protocol.ts";
 
 export class ChatClient {
   private readonly socket: WebSocket;

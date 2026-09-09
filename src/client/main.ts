@@ -1,5 +1,5 @@
-import { ChatClient } from "./client.js";
-import type { ServerMessage } from "../../shared/protocol.js";
+import { ChatClient } from "./client.ts";
+import type { ServerMessage } from "../../shared/protocol.ts";
 
 const chat = new ChatClient("ws://localhost:5230/ws");
 

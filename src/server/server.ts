@@ -1,15 +1,20 @@
 import Fastify from "fastify";
 import websocket from "@fastify/websocket";
-import type { RawData } from "ws";
+import fastifyStatic from "@fastify/static";
+import { join } from "node:path";
 
-import { ClientMessageSchema } from "../../shared/protocol.js";
-import { Chat } from "./chat.js";
+import { ClientMessageSchema } from "../../shared/protocol.ts";
+import { Chat } from "./chat.ts";
 
 const app = Fastify({
   logger: true,
 });
 
 await app.register(websocket);
+
+await app.register(fastifyStatic, {
+  root: join(import.meta.dirname, "../../public"),
+});
 
 const chat = new Chat();
 
