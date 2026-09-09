@@ -1,26 +1,17 @@
+import type { Server as SocketIOServer, Socket } from "socket.io";
 import type { ServerMessage } from "../../shared/protocol.ts";
 
-export interface ChatSocket {
-  readonly readyState: number;
-  readonly OPEN: number;
-  send(data: string): void;
-}
-
 export class Chat {
-  private readonly clients = new Set<ChatSocket>();
+  constructor(private readonly io: SocketIOServer) {}
 
-  add(socket: ChatSocket): void {
-    this.clients.add(socket);
-
+  add(socket: Socket): void {
     this.broadcast({
       type: "system",
       message: "Someone joined the chat",
     });
   }
 
-  remove(socket: ChatSocket): void {
-    this.clients.delete(socket);
-
+  remove(socket: Socket): void {
     this.broadcast({
       type: "system",
       message: "Someone left the chat",
@@ -28,22 +19,14 @@ export class Chat {
   }
 
   broadcast(message: ServerMessage): void {
-    const data = JSON.stringify(message);
-
-    for (const client of this.clients) {
-      if (client.readyState === client.OPEN) {
-        client.send(data);
-      }
-    }
+    this.io.emit("message", message);
   }
 
-  send(socket: ChatSocket, message: ServerMessage): void {
-    if (socket.readyState === socket.OPEN) {
-      socket.send(JSON.stringify(message));
-    }
+  send(socket: Socket, message: ServerMessage): void {
+    socket.emit("message", message);
   }
 
   get clientCount(): number {
-    return this.clients.size;
+    return this.io.sockets.sockets.size;
   }
 }
