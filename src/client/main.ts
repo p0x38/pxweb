@@ -1,8 +1,7 @@
 import { ChatClient } from "./client.ts";
 import type { ServerMessage } from "../../shared/protocol.ts";
 
-const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-const chat = new ChatClient(`${protocol}//${window.location.host}/ws`);
+const chat = new ChatClient(window.location.origin);
 
 const inputElement = document.querySelector<HTMLInputElement>("#message");
 const formElement = document.querySelector<HTMLFormElement>("#chat-form");
